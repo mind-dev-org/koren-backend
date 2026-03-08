@@ -1,0 +1,21 @@
+{
+    "name": "koren/api",
+    "description": "Koren eco-marketplace backend API",
+    "require": {
+        "php": ">=8.1",
+        "vine/framework": "*"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../vine-framework"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
