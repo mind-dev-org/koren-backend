@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/bootstrap/app.php';
+
+use Vine\Console\Cli;
+use Vine\Console\Commands\MigrateCommand;
+use Vine\Console\Commands\SeedCommand;
+use Vine\Console\Commands\RouteListCommand;
+
+$cli = new Cli();
+$cli->register('migrate',       MigrateCommand::class);
+$cli->register('migrate:rollback', MigrateCommand::class);
+$cli->register('migrate:status', MigrateCommand::class);
+$cli->register('seed',          SeedCommand::class);
+$cli->register('route:list',    RouteListCommand::class);
+
+$cli->run($argv);
