@@ -1,0 +1,1587 @@
+openapi: 3.0.3
+
+info:
+  title: Koren API
+  description: Eco-marketplace connecting local farmers directly with buyers. Built on Vine PHP framework.
+  version: 1.0.0
+  contact:
+    name: Koren Team
+
+servers:
+  - url: https://koren-api.onrender.com/api/v1
+    description: Production
+  - url: http://localhost:8000/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registration, login, token management
+  - name: Products
+    description: Browse products and categories
+  - name: Farmers
+    description: Public farmer profiles and farmer dashboard
+  - name: Orders
+    description: Place orders and track delivery
+  - name: Customer
+    description: Customer profile, loyalty points, subscriptions
+  - name: Delivery
+    description: Delivery slots and zones
+  - name: System
+    description: Health and stats
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Validation failed
+        details:
+          type: object
+
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [customer, farmer, admin]
+        avatar_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AuthResult:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 900
+        user:
+          $ref: '#/components/schemas/User'
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+
+    Farmer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        farm_name:
+          type: string
+        region:
+          type: string
+        bio_short:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        years_exp:
+          type: integer
+        rating:
+          type: number
+          format: float
+        products_count:
+          type: integer
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        unit:
+          type: string
+          example: kg
+        stock_qty:
+          type: integer
+        image_url:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        is_featured:
+          type: boolean
+        harvested_at:
+          type: string
+          format: date
+          nullable: true
+        farmer:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            region:
+              type: string
+            avatar_url:
+              type: string
+              nullable: true
+        category:
+          type: object
+          properties:
+            slug:
+              type: string
+            name:
+              type: string
+
+    OrderItem:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        qty:
+          type: integer
+        unit_price:
+          type: number
+          format: float
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, confirmed, packed, in_transit, delivered, cancelled]
+        subtotal:
+          type: number
+          format: float
+        discount:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        tracking_token:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    TrackingStep:
+      type: object
+      properties:
+        status:
+          type: string
+        label:
+          type: string
+        done:
+          type: boolean
+
+    Tracking:
+      type: object
+      properties:
+        order_id:
+          type: integer
+        status:
+          type: string
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingStep'
+        courier:
+          type: object
+          nullable: true
+          properties:
+            current_location:
+              type: object
+              properties:
+                lat:
+                  type: number
+                lng:
+                  type: number
+                updated_at:
+                  type: string
+                  format: date-time
+        destination:
+          type: object
+          properties:
+            label:
+              type: string
+            lat:
+              type: number
+              nullable: true
+            lng:
+              type: number
+              nullable: true
+
+    LoyaltyAccount:
+      type: object
+      properties:
+        balance:
+          type: integer
+        tier:
+          type: object
+          properties:
+            current:
+              type: string
+              enum: [sprout, seedling, harvest, root]
+        next_tier:
+          nullable: true
+          type: object
+          properties:
+            name:
+              type: string
+            points_needed:
+              type: integer
+
+    LoyaltyTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [earned, redeemed, bonus, expired]
+        amount:
+          type: integer
+        description:
+          type: string
+        order_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [active, paused, cancelled]
+        frequency:
+          type: string
+          enum: [weekly, biweekly, monthly]
+        day_of_week:
+          type: integer
+          nullable: true
+        next_delivery_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    DeliverySlot:
+      type: object
+      properties:
+        id:
+          type: integer
+        time_range:
+          type: string
+          example: "09:00-12:00"
+        available:
+          type: boolean
+        capacity_left:
+          type: integer
+        price:
+          type: number
+          format: float
+        is_eco:
+          type: boolean
+
+paths:
+
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: ok
+                      version:
+                        type: string
+                      db:
+                        type: string
+                        example: connected
+                      time:
+                        type: string
+                        format: date-time
+
+  /stats:
+    get:
+      tags: [System]
+      summary: Public platform statistics
+      responses:
+        '200':
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      farmers_count:
+                        type: integer
+                      products_count:
+                        type: integer
+                      orders_count:
+                        type: integer
+                      total_sold:
+                        type: number
+                        format: float
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new customer account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                phone:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthResult'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login as customer or farmer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthResult'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout and invalidate refresh token
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Logged out
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      expires_in:
+                        type: integer
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/farmer/register:
+    post:
+      tags: [Auth]
+      summary: Register as a farmer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, farm_name, region]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                phone:
+                  type: string
+                farm_name:
+                  type: string
+                region:
+                  type: string
+                bio:
+                  type: string
+                farm_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [FREE_RANGE, ORGANIC, BIODYNAMIC, GREENHOUSE]
+      responses:
+        '201':
+          description: Farmer registered (pending verification)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthResult'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: List all products with filters and pagination
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [vegetables, fruits, eggs-dairy, berries]
+        - name: farmer_id
+          in: query
+          schema:
+            type: integer
+        - name: price_tier
+          in: query
+          schema:
+            type: string
+            enum: [low, mid, high]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc, name_asc]
+            default: newest
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 6
+            maximum: 24
+      responses:
+        '200':
+          description: Paginated product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /products/featured:
+    get:
+      tags: [Products]
+      summary: Get the featured product (Today's Harvest)
+      responses:
+        '200':
+          description: Featured product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Product'
+                      - type: object
+                        properties:
+                          badge:
+                            type: string
+                            example: "THIS WEEK'S TOP PICK"
+        '404':
+          description: No featured product set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /categories:
+    get:
+      tags: [Products]
+      summary: List all categories
+      responses:
+        '200':
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+  /farmers:
+    get:
+      tags: [Farmers]
+      summary: List all farmers
+      responses:
+        '200':
+          description: Farmers list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Farmer'
+
+  /farmers/{id}:
+    get:
+      tags: [Farmers]
+      summary: Get public farmer profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Farmer profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Farmer'
+        '404':
+          description: Farmer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /farmers/{id}/products:
+    get:
+      tags: [Farmers]
+      summary: Get products by farmer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Farmer's products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+
+  /farmer/profile:
+    get:
+      tags: [Farmers]
+      summary: Get own farmer profile (dashboard)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Farmer's own profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Farmer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not a farmer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /farmer/products:
+    get:
+      tags: [Farmers]
+      summary: List farmer's own products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Products list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+    post:
+      tags: [Farmers]
+      summary: Add a new product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, price, category_id, stock_qty]
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                category_id:
+                  type: integer
+                stock_qty:
+                  type: integer
+                unit:
+                  type: string
+                  default: kg
+                description:
+                  type: string
+                image_url:
+                  type: string
+                harvested_at:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /farmer/products/{id}:
+    put:
+      tags: [Farmers]
+      summary: Update a product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                price:
+                  type: number
+                stock_qty:
+                  type: integer
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Farmers]
+      summary: Deactivate a product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product deactivated
+
+  /farmer/orders:
+    get:
+      tags: [Farmers]
+      summary: Orders containing farmer's products
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+
+  /farmer/orders/{id}/status:
+    patch:
+      tags: [Farmers]
+      summary: Update order status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [confirmed, packed, in_transit, delivered, cancelled]
+                note:
+                  type: string
+                location:
+                  type: object
+                  description: Required when status is in_transit
+                  properties:
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '422':
+          description: Invalid status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /farmer/stats:
+    get:
+      tags: [Farmers]
+      summary: Farmer's sales statistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      total_orders:
+                        type: integer
+                      total_revenue:
+                        type: number
+                      products_count:
+                        type: integer
+
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Place an order (guest or customer)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [buyer, items]
+              properties:
+                buyer:
+                  type: object
+                  required: [name, phone]
+                  properties:
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+                delivery_address:
+                  type: object
+                  properties:
+                    city:
+                      type: string
+                    street:
+                      type: string
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [product_id, qty]
+                    properties:
+                      product_id:
+                        type: integer
+                      qty:
+                        type: integer
+                delivery_slot_id:
+                  type: integer
+                  nullable: true
+                redeem_points:
+                  type: integer
+                  nullable: true
+                  description: Must be multiple of 100. Customer only.
+                note:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: integer
+                      status:
+                        type: string
+                      subtotal:
+                        type: number
+                      discount:
+                        type: number
+                      final_total:
+                        type: number
+                      points_earned:
+                        type: integer
+                      tracking_token:
+                        type: string
+                      message:
+                        type: string
+        '422':
+          description: Stock or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{id}/tracking:
+    get:
+      tags: [Orders]
+      summary: Public order tracking (no auth required — use token or phone)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: token
+          in: query
+          schema:
+            type: string
+          description: tracking_token from order creation response
+        - name: phone
+          in: query
+          schema:
+            type: string
+          description: Phone number used when placing the order
+      responses:
+        '200':
+          description: Tracking info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tracking'
+        '403':
+          description: Token or phone mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me:
+    get:
+      tags: [Customer]
+      summary: Get customer profile with loyalty info
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me/orders:
+    get:
+      tags: [Customer]
+      summary: Customer's order history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, packed, in_transit, delivered, cancelled]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Orders list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /me/orders/{id}:
+    get:
+      tags: [Customer]
+      summary: Order detail with items
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Order'
+                      - type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/OrderItem'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me/orders/{id}/tracking:
+    get:
+      tags: [Customer]
+      summary: Live tracking for authenticated customer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tracking info with courier location
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tracking'
+
+  /me/points:
+    get:
+      tags: [Customer]
+      summary: Loyalty points balance and tier info
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Loyalty info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LoyaltyAccount'
+
+  /me/points/history:
+    get:
+      tags: [Customer]
+      summary: Points transaction history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Transaction history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoyaltyTransaction'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /me/points/redeem:
+    post:
+      tags: [Customer]
+      summary: Redeem loyalty points for a discount
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [points_to_redeem, order_id]
+              properties:
+                points_to_redeem:
+                  type: integer
+                  description: Must be a multiple of 100
+                  example: 200
+                order_id:
+                  type: integer
+      responses:
+        '200':
+          description: Points redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      redeemed_points:
+                        type: integer
+                      discount_applied:
+                        type: number
+                      new_balance:
+                        type: integer
+        '422':
+          description: Insufficient points or invalid amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me/subscriptions:
+    get:
+      tags: [Customer]
+      summary: List customer's auto-delivery subscriptions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subscriptions list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subscription'
+    post:
+      tags: [Customer]
+      summary: Create a new auto-delivery subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, schedule]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [product_id, qty]
+                    properties:
+                      product_id:
+                        type: integer
+                      qty:
+                        type: integer
+                schedule:
+                  type: object
+                  required: [frequency]
+                  properties:
+                    frequency:
+                      type: string
+                      enum: [weekly, biweekly, monthly]
+                    day_of_week:
+                      type: integer
+                      minimum: 1
+                      maximum: 7
+                    day_of_month:
+                      type: integer
+                      minimum: 1
+                      maximum: 28
+                    delivery_slot:
+                      type: string
+                      example: "10:00-14:00"
+                delivery_address:
+                  type: object
+                  properties:
+                    city:
+                      type: string
+                    street:
+                      type: string
+                    lat:
+                      type: number
+                    lng:
+                      type: number
+                note:
+                  type: string
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Subscription'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me/subscriptions/{id}:
+    patch:
+      tags: [Customer]
+      summary: Pause, resume, or update subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [pause, resume, update]
+                pause_until:
+                  type: string
+                  format: date
+                  description: Required when action is pause
+                schedule:
+                  type: object
+                  description: Required when action is update
+                  properties:
+                    frequency:
+                      type: string
+                      enum: [weekly, biweekly, monthly]
+                    day_of_week:
+                      type: integer
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Subscription'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Customer]
+      summary: Cancel a subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /delivery/slots:
+    get:
+      tags: [Delivery]
+      summary: Get available delivery slots for a date and city
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Defaults to tomorrow
+        - name: city
+          in: query
+          schema:
+            type: string
+          description: Defaults to Kyiv
+      responses:
+        '200':
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                        format: date
+                      city:
+                        type: string
+                      slots:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DeliverySlot'
+
+  /delivery/zones:
+    get:
+      tags: [Delivery]
+      summary: Get delivery zones as GeoJSON
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: FeatureCollection
+                      features:
+                        type: array
+                        items:
+                          type: object
