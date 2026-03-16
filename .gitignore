@@ -3,5 +3,8 @@ vendor/
 *.log
 .DS_Store
 .idea/
-*.sh
 *.swp
+
+# packages/ — intentionally tracked (Render deploy workaround)
+# TODO: revert when migrating to AWS
+!packages/
