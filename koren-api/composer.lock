@@ -4,14 +4,14 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "68ec9c4a8eac39717312edfae09f7734",
+    "content-hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
     "packages": [
         {
             "name": "vine/framework",
             "version": "dev-main",
             "dist": {
                 "type": "path",
-                "url": "../vine-framework",
+                "url": "./packages/vine-framework",
                 "reference": "27ac97d91ca5c87bdf7692395a0c199e6e61b285"
             },
             "require": {
