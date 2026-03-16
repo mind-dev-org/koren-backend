@@ -8,7 +8,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../vine-framework"
+            "url": "./packages/vine-framework"
         }
     ],
     "autoload": {
