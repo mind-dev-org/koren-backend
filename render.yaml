@@ -1,0 +1,17 @@
+# render.yaml — тимчасова конфігурація для Render.com (тест-деплой)
+# Визначає dockerContext: koren-api щоб docker build мав правильний контекст.
+# TODO: видалити при переїзді на AWS
+services:
+  - type: web
+    name: koren-api
+    env: docker
+    dockerfilePath: koren-api/Dockerfile
+    dockerContext: koren-api
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: APP_ENV
+        value: production
