@@ -1,5 +1,6 @@
+<?php
 
-<?php namespace App\Controllers;
+namespace App\Controllers;
 
 use App\Services\AuthService;
 use App\Services\OAuthService;
