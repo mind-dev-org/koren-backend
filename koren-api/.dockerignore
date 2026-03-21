@@ -1,0 +1,10 @@
+.env
+vendor/
+.git/
+.gitignore
+*.md
+test.php
+README.md
+render.yaml
+*.sh
+.eb-venv
