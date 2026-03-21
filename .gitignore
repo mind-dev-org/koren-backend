@@ -4,7 +4,13 @@ vendor/
 .DS_Store
 .idea/
 *.swp
-
+*.sh
+koren-api/vine-framework
 # packages/ — intentionally tracked (Render deploy workaround)
 # TODO: revert when migrating to AWS
 !packages/
+
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+Koren_API.postman_collection.json
