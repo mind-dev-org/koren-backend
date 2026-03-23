@@ -112,7 +112,7 @@ function assert_ok(
 
 // --- TESTS -------------------------------------------------------------------
 
-echo "\n" . color(" KOREN API — Test Runner", "36;1") . "\n";
+echo "\n" . color(" KOREN API - Test Runner", "36;1") . "\n";
 echo color(" " . $BASE, "90") . "\n";
 
 // -- System --------------------------------------------------------------------
