@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2357ff7a8f1cdaf565446cf8c4986e7a",
+    "content-hash": "58cee3d916a0658fc6fc5366bca6c7ca",
     "packages": [
         {
             "name": "firebase/php-jwt",
@@ -1336,7 +1336,7 @@
             "version": "dev-main",
             "dist": {
                 "type": "path",
-                "url": "../vine-framework",
+                "url": "./vine-framework",
                 "reference": "27ac97d91ca5c87bdf7692395a0c199e6e61b285"
             },
             "require": {

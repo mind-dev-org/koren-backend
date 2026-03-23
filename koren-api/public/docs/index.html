@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Koren API - Documentation</title>
+		<link
+			rel="stylesheet"
+			href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css"
+		/>
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+				background: #f8fafc;
+			}
+
+			.top-bar {
+				background: #1e6b4a;
+				padding: 14px 32px;
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				position: sticky;
+				top: 0;
+				z-index: 1000;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+			}
+			.top-bar .logo {
+				color: #fff;
+				font-size: 22px;
+				font-weight: 800;
+				letter-spacing: -0.5px;
+			}
+			.top-bar .version {
+				background: rgba(255, 255, 255, 0.2);
+				color: #fff;
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 4px;
+			}
+			.top-bar .env-badge {
+				margin-left: auto;
+				background: #ff9900;
+				color: #fff;
+				font-size: 12px;
+				font-weight: 600;
+				padding: 4px 12px;
+				border-radius: 6px;
+			}
+
+			.server-switcher {
+				background: #fff;
+				border-bottom: 1px solid #e2e8f0;
+				padding: 10px 32px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				font-size: 13px;
+				color: #374151;
+			}
+			.server-switcher label {
+				font-weight: 600;
+			}
+			.server-switcher select {
+				border: 1px solid #d1d5db;
+				border-radius: 6px;
+				padding: 4px 10px;
+				font-size: 13px;
+				background: #f9fafb;
+				cursor: pointer;
+			}
+			.server-switcher .hint {
+				color: #9ca3af;
+				font-size: 12px;
+				margin-left: 8px;
+			}
+
+			#swagger-ui .swagger-ui .topbar {
+				display: none;
+			}
+			#swagger-ui .swagger-ui .info {
+				margin: 20px 0 0;
+			}
+			#swagger-ui .swagger-ui .info hgroup.main {
+				margin-bottom: 12px;
+			}
+
+			.wrapper {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 0 16px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="top-bar">
+			<span class="logo">KOREN</span>
+			<span class="version">v1.0.0</span>
+			<span class="env-badge" id="env-label">PRODUCTION</span>
+		</div>
+
+		<div class="server-switcher">
+			<label>Server:</label>
+			<select id="server-select">
+				<option value="https://d2tmkbsw9vga7t.cloudfront.net/api/v1">
+					Production (AWS EB)
+				</option>
+				<option value="http://localhost:8000/api/v1">
+					Local (localhost:8000)
+				</option>
+			</select>
+			<span class="hint">Вибери сервер для "Try it out"</span>
+		</div>
+
+		<div id="swagger-ui"></div>
+
+		<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+		<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+		<script>
+			// Load openapi.yaml relative to this page
+			const specUrl = window.location.origin + "/docs/openapi.yaml";
+
+			const ui = SwaggerUIBundle({
+				url: specUrl,
+				dom_id: "#swagger-ui",
+				presets: [
+					SwaggerUIBundle.presets.apis,
+					SwaggerUIStandalonePreset,
+				],
+				layout: "StandaloneLayout",
+				deepLinking: true,
+				displayRequestDuration: true,
+				defaultModelsExpandDepth: 1,
+				defaultModelExpandDepth: 2,
+				docExpansion: "list",
+				filter: true,
+				tryItOutEnabled: false,
+				requestInterceptor: (req) => {
+					const server =
+						document.getElementById("server-select").value;
+					// Replace server in URL
+					req.url = req.url.replace(
+						/https?:\/\/[^/]+\/api\/v1/,
+						server,
+					);
+					return req;
+				},
+				onComplete: () => {
+					// Persist auth token across Try it out requests
+					const saved = localStorage.getItem("koren_token");
+					if (saved) {
+						ui.preauthorizeApiKey("BearerAuth", saved);
+					}
+				},
+			});
+
+			// Server switcher
+			document
+				.getElementById("server-select")
+				.addEventListener("change", function () {
+					const label = document.getElementById("env-label");
+					label.textContent = this.value.includes("localhost")
+						? "LOCAL DEV"
+						: "PRODUCTION";
+					label.style.background = this.value.includes("localhost")
+						? "#2563EB"
+						: "#FF9900";
+				});
+
+			// Save token helper - run in browser console: saveToken("eyJ...")
+			window.saveToken = (token) => {
+				localStorage.setItem("koren_token", token);
+				ui.preauthorizeApiKey("BearerAuth", token);
+				console.log("Token saved");
+			};
+			window.clearToken = () => {
+				localStorage.removeItem("koren_token");
+				console.log("Token cleared");
+			};
+		</script>
+	</body>
+</html>

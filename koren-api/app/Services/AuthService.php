@@ -62,7 +62,6 @@ class AuthService
 				PASSWORD_BCRYPT,
 			),
 			"role" => "farmer",
-			"is_verified" => false,
 		]);
 
 		FarmerProfile::create([

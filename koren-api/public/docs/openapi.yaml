@@ -1176,7 +1176,7 @@ paths:
     /orders/{id}/tracking:
         get:
             tags: [Orders]
-            summary: Public order tracking (no auth required - use token or phone)
+            summary: Public order tracking (no auth required — use token or phone)
             parameters:
                 - name: id
                   in: path
@@ -1752,7 +1752,7 @@ paths:
                                     type: string
                                 name:
                                     type: string
-                                    description: Full name - send only on first login
+                                    description: Full name — send only on first login
             responses:
                 "200":
                     description: Auth result
